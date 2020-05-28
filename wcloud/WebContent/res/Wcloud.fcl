@@ -1,0 +1,61 @@
+FUNCTION_BLOCK wcloud	// Block definition (there may be more than one block per file)
+
+// Define input variables
+VAR_INPUT				
+	title  : REAL;
+	headings : REAL;
+	paragraphs : REAL;
+END_VAR
+
+// Define output variable
+VAR_OUTPUT				
+	score  : REAL;
+END_VAR
+
+// Fuzzify input variable 'service': {'bad', 'good' , 'excellent'}
+   FUZZIFY title			
+	TERM bad := (0, 1) (50, 0) ; 
+	TERM good := (50, 1) (100,0);
+	TERM excellent := (100, 0) (1000, 1);
+   END_FUZZIFY
+
+// Fuzzify input variable 'service': {'bad', 'good' , 'excellent'}
+   FUZZIFY headings			
+		TERM bad := (0, 0) (20, 1) (40, 0); 
+		TERM good := (40, 0) (80,1) (100,0);
+		TERM excellent := (100, 0) (500, 1) (1000, 1);
+	END_FUZZIFY
+	
+// Fuzzify input variable 'service': {'bad', 'good' , 'excellent'}
+	FUZZIFY paragraphs			
+		TERM bad := (0, 1) (50, 0) ; 
+		TERM good := (50, 0) (100,1) (150,1) (200,0);
+		TERM excellent := (200, 0) (1000, 1);
+	END_FUZZIFY
+
+// Defzzzify output variable 'tip' : {'low', 'medium', 'high' }
+DEFUZZIFY score			
+	TERM low := (0,0) (5,1) (10,0);
+	TERM medium := (10,0) (15,1) (20,0);
+	TERM high := (20,0) (25,1) (30,0);
+	METHOD : COG;		// Use 'Center Of Gravity' defuzzification method
+	DEFAULT := 0;		// Default value is 0 (if no rule activates defuzzifier)
+END_DEFUZZIFY
+
+// Inference rules
+RULEBLOCK No1
+	    AND : MIN;	// Use 'min' for 'and'
+	    ACT : MIN;	// Use 'min' activation method
+	    ACCU : MAX;	// Use 'max' accumulation method
+	
+		RULE 1 : IF title IS good OR headings IS bad THEN score is medium;
+		RULE 2 : IF title IS bad AND paragraphs IS good THEN score is low;
+		RULE 3 : IF headings IS bad AND title is good THEN score is medium;
+		RULE 4 : IF paragraphs IS good THEN score IS medium; 
+		RULE 5 : IF title IS good AND headings IS good THEN score IS high;
+		RULE 6 : IF title is excellent THEN score is high;
+		RULE 7 : IF title is bad THEN score is low;
+		RULE 8 : IF headings is excellent THEN score is medium;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
